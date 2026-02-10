@@ -1,0 +1,12 @@
+services:
+  sentry_plugin:
+    networks:
+      - sentry_plugin
+    volumes:
+      - cache:/go
+
+volumes:
+  cache:
+
+networks:
+  sentry_plugin:

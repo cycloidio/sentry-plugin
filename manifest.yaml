@@ -11,7 +11,7 @@ configuration:
   key: sentry_api_key
   widget: simple_text
   type: string
-	required: true
+  required: true
 - name: "Endpoint"
   description: "Endpoint of the Sentry API"
   key: sentry_endpoint

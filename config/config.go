@@ -26,7 +26,7 @@ func Load() (*Config, error) {
 	if err := env.Load(&cfg, nil); err != nil {
 		fmt.Println("Usage:")
 		env.Usage(&cfg, os.Stdout, nil)
-		return nil, err
+		return &cfg, err
 	}
 
 	return &cfg, nil

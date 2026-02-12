@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	Port int `env:PORT`
+	Port int `env:"PORT" default:"8080"`
 
 	DB struct {
 		File string `env:"FILE"`

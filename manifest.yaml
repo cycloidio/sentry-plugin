@@ -23,3 +23,7 @@ configuration:
   key: sentry_organization_slug
   widget: simple_text
   type: string
+
+relations:
+- name: "Project Slug"
+  selector: "project.slug"

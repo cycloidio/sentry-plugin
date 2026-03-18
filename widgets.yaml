@@ -9,8 +9,8 @@
       FROM issues AS i
       JOIN projects AS p
         ON p.id = i.project_id
-      JOIN orgaizations AS o
-        ON o.id = p.orgaization_id
+      JOIN organizations AS o
+        ON o.id = p.organization_id
     columns:
       - value: title
         title: Title

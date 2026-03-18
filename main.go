@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -22,6 +23,9 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+//go:embed schema.sql
+var schema string
 
 func main() {
 	var started = true
@@ -55,6 +59,10 @@ func main() {
 		ss sentry.Service
 	)
 	if started {
+		if err := sqlite.Migrate(db, schema); err != nil {
+			started = false
+			logger.Error(fmt.Errorf("failed to apply schema: %w", err).Error())
+		}
 		or = sqlite.NewOrganizationRepository(db)
 		pr = sqlite.NewProjectRepository(db)
 		ir = sqlite.NewIssueRepository(db)

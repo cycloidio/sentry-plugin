@@ -73,15 +73,15 @@ func (p *Plugin) Ping(ctx context.Context) Status {
 func (p *Plugin) Event(ctx context.Context, e event.Event) {
 	// NOTE: If it's of type project:create we could create directly
 	// a new Project
-	return
 }
 
 func (p *Plugin) DeletePlugin(ctx context.Context) {
 	// NOTE: Nothing to do here
-	return
 }
 
 func (p *Plugin) Resync(ctx context.Context) {
+	p.setStatus(Syncthing)
+
 	select {
 	case <-ctx.Done():
 		return
@@ -170,7 +170,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 		}
 	}
 
-	return
+	p.setStatus(Ok)
 }
 
 func (p *Plugin) setStatus(s Status) {

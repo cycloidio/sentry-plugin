@@ -1,1 +1,24 @@
-[]
+- type: table
+  placement:
+    type: component
+    config:
+      tab_name: Sentry
+  widget:
+    query: >
+      SELECT i.title, i.permalink, i.has_seen, i.status
+      FROM issues AS i
+      JOIN projects AS p
+      ON p.id = i.project_id
+    columns:
+      - value: title
+        title: Title
+        type: string
+      - value: permalink
+        title: Permalink
+        type: string
+      - value: has_seen
+        title: Has Seen
+        type: boolean
+      - value: status
+        title: Status
+        type: string

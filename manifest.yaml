@@ -1,29 +1,33 @@
 description: This is a Plugin to import Organizations, Projects and Issues from Sentry
 icon: https://github.com/cycloid-community-catalog/public-stacks/blob/master/stack-dummy/icon.png
 images:
-- https://www.cycloid.io/wp-content/uploads/2025/07/Before_cycloid-v1-1024x636.webp
-- https://www.cycloid.io/wp-content/uploads/2025/07/With_Cycloid-v1-1024x636.webp
-- https://www.cycloid.io/wp-content/uploads/2025/04/fullscreen_dashboard_viewport-only_1440x960_1x-2-e1745837502879-1024x754.png
-- https://www.cycloid.io/wp-content/uploads/2025/04/components_cycloid_dashboard.webp
+  - https://www.cycloid.io/wp-content/uploads/2025/07/Before_cycloid-v1-1024x636.webp
+  - https://www.cycloid.io/wp-content/uploads/2025/07/With_Cycloid-v1-1024x636.webp
+  - https://www.cycloid.io/wp-content/uploads/2025/04/fullscreen_dashboard_viewport-only_1440x960_1x-2-e1745837502879-1024x754.png
+  - https://www.cycloid.io/wp-content/uploads/2025/04/components_cycloid_dashboard.webp
 configuration:
-- name: "API Key"
-  description: "API Key to access the Sentry API"
-  key: sentry_api_key
-  widget: simple_text
-  type: string
-  required: true
-- name: "Endpoint"
-  description: "Endpoint of the Sentry API"
-  key: sentry_endpoint
-  widget: simple_text
-  type: string
-  default: "http://sentry.io/api/0/"
-- name: "Organization slug"
-  description: "The organization in which the Sentry instance is scoped,\nif none is provided then all the organizations will be imported"
-  key: sentry_organization_slug
-  widget: simple_text
-  type: string
+  - name: "API Key"
+    description: "API Key to access the Sentry API"
+    key: sentry_api_key
+    widget: simple_text
+    type: string
+    required: true
+  - name: "Endpoint"
+    description: "Endpoint of the Sentry API"
+    key: sentry_endpoint
+    widget: simple_text
+    type: string
+    default: "http://sentry.io/api/0/"
+  - name: "Organization slug"
+    description: "The organization in which the Sentry instance is scoped,\nif none is provided then all the organizations will be imported"
+    key: sentry_organization_slug
+    widget: simple_text
+    type: string
 
 relations:
-- name: "Project Slug"
-  selector: "project.slug"
+  - name: "Project Slug"
+    decription: "The project in which the Sentry instance is scoped,\nif none is provided then all the projects will be imported"
+    selector: "p.slug"
+  - name: "Organization Slug"
+    description: "The organization in which the Sentry instance is scoped,\nif none is provided then all the organizations will be imported"
+    selector: "o.slug"

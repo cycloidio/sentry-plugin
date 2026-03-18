@@ -8,7 +8,9 @@
       SELECT i.title, i.permalink, i.has_seen, i.status
       FROM issues AS i
       JOIN projects AS p
-      ON p.id = i.project_id
+        ON p.id = i.project_id
+      JOIN orgaizations AS o
+        ON o.id = p.orgaization_id
     columns:
       - value: title
         title: Title

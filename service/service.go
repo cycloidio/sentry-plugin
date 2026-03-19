@@ -80,17 +80,21 @@ func (p *Plugin) DeletePlugin(ctx context.Context) {
 }
 
 func (p *Plugin) Resync(ctx context.Context) {
+	p.logger.Info("resync started")
 	p.setStatus(Syncthing)
 
 	select {
 	case <-ctx.Done():
+		p.logger.Info("resync cancelled: context done")
 		return
 	default:
 	}
 	if !p.started {
+		p.logger.Info("resync skipped: plugin not started")
 		return
 	}
 	// This will delete everything as all have FK to organizations
+	p.logger.Info("deleting all organizations")
 	err := p.organizations.DeleteAll(ctx)
 	if err != nil {
 		ferr := fmt.Errorf("failed to delete all Organizations: %w", err)
@@ -101,6 +105,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 	sorgs := make([]sentryAPI.Organization, 0)
 
 	if p.config.Sentry.OrganizationSlug != "" {
+		p.logger.Info("fetching organization", "slug", p.config.Sentry.OrganizationSlug)
 		o, err := p.sentry.GetOrganization(p.config.Sentry.OrganizationSlug)
 		if err != nil {
 			ferr := fmt.Errorf("failed to get Sentry Organization: %w", err)
@@ -110,6 +115,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 		}
 		sorgs = append(sorgs, o)
 	} else {
+		p.logger.Info("fetching all organizations")
 		sorgs, _, err = p.sentry.GetOrganizations()
 		if err != nil {
 			ferr := fmt.Errorf("failed to get Sentry Organizations: %w", err)
@@ -118,8 +124,10 @@ func (p *Plugin) Resync(ctx context.Context) {
 			return
 		}
 	}
+	p.logger.Info("organizations fetched", "count", len(sorgs))
 
 	for _, o := range sorgs {
+		p.logger.Info("syncing organization", "slug", *o.Slug)
 		_, err := p.organizations.Create(ctx, sentry.ToOrganization(o))
 		if err != nil {
 			ferr := fmt.Errorf("failed to create Organization: %w", err)
@@ -128,6 +136,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 			continue
 		}
 
+		p.logger.Info("fetching projects", "organization", *o.Slug)
 		sprojs, _, err := p.sentry.GetOrgProjects(o)
 		if err != nil {
 			ferr := fmt.Errorf("failed to get Sentry Projects: %w", err)
@@ -135,8 +144,10 @@ func (p *Plugin) Resync(ctx context.Context) {
 			p.setStatus(Error)
 			continue
 		}
+		p.logger.Info("projects fetched", "organization", *o.Slug, "count", len(sprojs))
 
 		for _, prj := range sprojs {
+			p.logger.Info("syncing project", "organization", *o.Slug, "project", *prj.Slug)
 			_, err := p.projects.Create(ctx, *o.Slug, sentry.ToProject(prj))
 			if err != nil {
 				ferr := fmt.Errorf("failed to create Project: %w", err)
@@ -150,6 +161,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 				shortIDLookup *bool   = nil
 				query         *string = nil
 			)
+			p.logger.Info("fetching issues", "organization", *o.Slug, "project", *prj.Slug)
 			issues, _, err := p.sentry.GetIssues(o, prj, statsPeriod, shortIDLookup, query)
 			if err != nil {
 				ferr := fmt.Errorf("failed to get Sentry Issues: %w", err)
@@ -157,6 +169,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 				p.setStatus(Error)
 				continue
 			}
+			p.logger.Info("issues fetched", "organization", *o.Slug, "project", *prj.Slug, "count", len(issues))
 
 			for _, is := range issues {
 				_, err := p.issues.Create(ctx, *o.Slug, *prj.Slug, sentry.ToIssue(is))
@@ -170,6 +183,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 		}
 	}
 
+	p.logger.Info("resync completed")
 	p.setStatus(Ok)
 }
 

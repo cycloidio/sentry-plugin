@@ -23,11 +23,3 @@ configuration:
     key: sentry_organization_slug
     widget: simple_text
     type: string
-
-relations:
-  - name: "Project Slug"
-    decription: "The project in which the Sentry instance is scoped,\nif none is provided then all the projects will be imported"
-    selector: "p.slug"
-  - name: "Organization Slug"
-    description: "The organization in which the Sentry instance is scoped,\nif none is provided then all the organizations will be imported"
-    selector: "o.slug"

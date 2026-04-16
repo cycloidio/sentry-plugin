@@ -13,6 +13,7 @@ ifeq ($(ARGS),)
 endif
 
 VERSION=0.0.1
+LOCAL_REGISTRY=localhost:5000
 
 .PHONY: help
 help: Makefile ## This help dialog
@@ -38,3 +39,8 @@ test: ## Tests the Plugin
 docker-release: ## Builds the base Docker image for the registry
 	@docker build -f ./docker/Dockerfile -t cycloid/sentry-plugin:$(VERSION) .
 	@docker push cycloid/sentry-plugin:$(VERSION)
+
+.PHONY: docker-local
+docker-local: ## Builds and pushes the Docker image to a local registry
+	@docker build --provenance=false -f ./docker/Dockerfile -t $(LOCAL_REGISTRY)/cycloid/sentry-plugin:$(VERSION) .
+	@docker push $(LOCAL_REGISTRY)/cycloid/sentry-plugin:$(VERSION)

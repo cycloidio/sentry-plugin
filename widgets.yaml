@@ -1,3 +1,11 @@
+- type: iframe
+  placement:
+    type: component
+    config:
+      tab_name: Sentry Preview
+  widget:
+    query: "/iframe"
+
 - type: table
   placement:
     type: component

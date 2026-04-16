@@ -14,6 +14,7 @@ func Handler(s service.Service) http.Handler {
 	r.Handle("POST /_cy/events", eventsHandler(s))
 	r.Handle("DELETE /_cy/plugin", deletePluginHandler(s))
 	r.Handle("POST /_cy/resync", resyncHandler(s))
+	r.Handle("GET /iframe", iframeHandler(s))
 
 	return r
 }

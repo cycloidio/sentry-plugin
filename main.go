@@ -40,11 +40,14 @@ func main() {
 		logger.Error(fmt.Errorf("failed to load config: %w", err).Error())
 	}
 
+	logger.Info("loaded config", "db_file", cfg.DB.File)
+
 	// By default we use the 'memory' setting so for testing we can easily use it
 	q := "file::memory:?cache=shared&_foreign_keys=true"
 	if cfg.DB.File != "" {
 		q = cfg.DB.File + "?_foreign_keys=true"
 	}
+	logger.Info("opening SQLite database", "dsn", q)
 	db, err := sql.Open("sqlite3", q)
 	if err != nil {
 		started = false
@@ -67,9 +70,14 @@ func main() {
 		pr = sqlite.NewProjectRepository(db)
 		ir = sqlite.NewIssueRepository(db)
 
-		ss, err = sentry.New(cfg.Sentry.APIKey, cfg.Sentry.Endpoint)
-		if err != nil {
-			started = false
+		if cfg.Sentry.APIKey == sentry.E2EFixturesKey {
+			logger.Info("e2e fixture mode enabled: using hardcoded Sentry data")
+			ss = &sentry.FixtureService{}
+		} else {
+			ss, err = sentry.New(cfg.Sentry.APIKey, cfg.Sentry.Endpoint)
+			if err != nil {
+				started = false
+			}
 		}
 	}
 	sctx, cfn := context.WithCancel(context.TODO())

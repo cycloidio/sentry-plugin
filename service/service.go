@@ -106,15 +106,14 @@ func (p *Plugin) Resync(ctx context.Context) {
 	sorgs := make([]sentryAPI.Organization, 0)
 
 	if p.config.Sentry.OrganizationSlug != "" {
-		p.logger.Info("fetching organization", "slug", p.config.Sentry.OrganizationSlug)
-		o, err := p.sentry.GetOrganization(p.config.Sentry.OrganizationSlug)
-		if err != nil {
-			ferr := fmt.Errorf("failed to get Sentry Organization: %w", err)
-			p.logger.Error(ferr.Error())
-			p.setStatus(Error)
-			return
-		}
-		sorgs = append(sorgs, o)
+		slug := p.config.Sentry.OrganizationSlug
+		emptyID := ""
+		p.logger.Info("using configured organization", "slug", slug)
+		sorgs = append(sorgs, sentryAPI.Organization{
+			ID:   &emptyID,
+			Slug: &slug,
+			Name: slug,
+		})
 	} else {
 		p.logger.Info("fetching all organizations")
 		sorgs, _, err = p.sentry.GetOrganizations()

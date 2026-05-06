@@ -127,16 +127,7 @@ func TestResync(t *testing.T) {
 			s    = mock.NewService(sctx, ctrl)
 
 			ctx = context.Background()
-			org = organization.Organization{
-				ID:   "123",
-				Name: "My Org",
-				Slug: "my_org",
-			}
-			sorg = sentryAPI.Organization{
-				ID:   &org.ID,
-				Name: org.Name,
-				Slug: &org.Slug,
-			}
+			orgSlug = "my_org"
 
 			prj = project.Project{
 				ID:     "456",
@@ -179,17 +170,30 @@ func TestResync(t *testing.T) {
 		)
 
 		// We force the OrganizationSlug so we only fetch that one
-		s.Config.Sentry.OrganizationSlug = org.Slug
+		s.Config.Sentry.OrganizationSlug = orgSlug
+
+		// When OrganizationSlug is set, the org is constructed from the slug
+		// without calling GetOrganization
+		emptyID := ""
+		constructedOrg := organization.Organization{
+			ID:   "",
+			Name: orgSlug,
+			Slug: orgSlug,
+		}
+		constructedSorg := sentryAPI.Organization{
+			ID:   &emptyID,
+			Slug: &orgSlug,
+			Name: orgSlug,
+		}
 
 		s.Organizations.EXPECT().DeleteAll(ctx).Return(nil)
-		s.Sentry.EXPECT().GetOrganization(org.Slug).Return(sorg, nil)
-		s.Organizations.EXPECT().Create(ctx, org).Return(uint32(1), nil)
+		s.Organizations.EXPECT().Create(ctx, constructedOrg).Return(uint32(1), nil)
 
-		s.Sentry.EXPECT().GetOrgProjects(sorg).Return([]sentryAPI.Project{sprj}, nil, nil)
-		s.Projects.EXPECT().Create(ctx, org.Slug, prj).Return(uint32(1), nil)
+		s.Sentry.EXPECT().GetOrgProjects(constructedSorg).Return([]sentryAPI.Project{sprj}, nil, nil)
+		s.Projects.EXPECT().Create(ctx, orgSlug, prj).Return(uint32(1), nil)
 
-		s.Sentry.EXPECT().GetIssues(sorg, sprj, nil, nil, nil).Return([]sentryAPI.Issue{siss}, nil, nil)
-		s.Issues.EXPECT().Create(ctx, org.Slug, prj.Slug, iss).Return(uint32(1), nil)
+		s.Sentry.EXPECT().GetIssues(constructedSorg, sprj, nil, nil, nil).Return([]sentryAPI.Issue{siss}, nil, nil)
+		s.Issues.EXPECT().Create(ctx, orgSlug, prj.Slug, iss).Return(uint32(1), nil)
 
 		s.S.Resync(ctx)
 	})

@@ -137,12 +137,29 @@ func (p *Plugin) Resync(ctx context.Context) {
 		}
 
 		p.logger.Info("fetching projects", "organization", *o.Slug)
-		sprojs, _, err := p.sentry.GetOrgProjects(o)
-		if err != nil {
-			ferr := fmt.Errorf("failed to get Sentry Projects: %w", err)
-			p.logger.Error(ferr.Error())
-			p.setStatus(Error)
-			continue
+		var sprojs []sentryAPI.Project
+		if p.config.Sentry.OrganizationSlug != "" {
+			allProjs, _, perr := p.sentry.GetProjects()
+			if perr != nil {
+				ferr := fmt.Errorf("failed to get Sentry Projects: %w", perr)
+				p.logger.Error(ferr.Error())
+				p.setStatus(Error)
+				continue
+			}
+			for _, prj := range allProjs {
+				if prj.Organization != nil && prj.Organization.Slug != nil && *prj.Organization.Slug == *o.Slug {
+					sprojs = append(sprojs, prj)
+				}
+			}
+		} else {
+			var perr error
+			sprojs, _, perr = p.sentry.GetOrgProjects(o)
+			if perr != nil {
+				ferr := fmt.Errorf("failed to get Sentry Projects: %w", perr)
+				p.logger.Error(ferr.Error())
+				p.setStatus(Error)
+				continue
+			}
 		}
 		p.logger.Info("projects fetched", "organization", *o.Slug, "count", len(sprojs))
 

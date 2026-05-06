@@ -186,13 +186,17 @@ func TestResync(t *testing.T) {
 			Name: orgSlug,
 		}
 
+		// GetProjects returns projects with Organization info for filtering
+		sprjWithOrg := sprj
+		sprjWithOrg.Organization = &constructedSorg
+
 		s.Organizations.EXPECT().DeleteAll(ctx).Return(nil)
 		s.Organizations.EXPECT().Create(ctx, constructedOrg).Return(uint32(1), nil)
 
-		s.Sentry.EXPECT().GetOrgProjects(constructedSorg).Return([]sentryAPI.Project{sprj}, nil, nil)
+		s.Sentry.EXPECT().GetProjects().Return([]sentryAPI.Project{sprjWithOrg}, nil, nil)
 		s.Projects.EXPECT().Create(ctx, orgSlug, prj).Return(uint32(1), nil)
 
-		s.Sentry.EXPECT().GetIssues(constructedSorg, sprj, nil, nil, nil).Return([]sentryAPI.Issue{siss}, nil, nil)
+		s.Sentry.EXPECT().GetIssues(constructedSorg, sprjWithOrg, nil, nil, nil).Return([]sentryAPI.Issue{siss}, nil, nil)
 		s.Issues.EXPECT().Create(ctx, orgSlug, prj.Slug, iss).Return(uint32(1), nil)
 
 		s.S.Resync(ctx)

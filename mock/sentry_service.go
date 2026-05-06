@@ -102,3 +102,19 @@ func (mr *SentryServiceMockRecorder) GetOrganizations() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizations", reflect.TypeOf((*SentryService)(nil).GetOrganizations))
 }
+
+// GetProjects mocks base method.
+func (m *SentryService) GetProjects() ([]sentry.Project, *sentry.Link, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjects")
+	ret0, _ := ret[0].([]sentry.Project)
+	ret1, _ := ret[1].(*sentry.Link)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetProjects indicates an expected call of GetProjects.
+func (mr *SentryServiceMockRecorder) GetProjects() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjects", reflect.TypeOf((*SentryService)(nil).GetProjects))
+}

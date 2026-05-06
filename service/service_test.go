@@ -174,14 +174,13 @@ func TestResync(t *testing.T) {
 
 		// When OrganizationSlug is set, the org is constructed from the slug
 		// without calling GetOrganization
-		emptyID := ""
 		constructedOrg := organization.Organization{
-			ID:   "",
+			ID:   orgSlug,
 			Name: orgSlug,
 			Slug: orgSlug,
 		}
 		constructedSorg := sentryAPI.Organization{
-			ID:   &emptyID,
+			ID:   &orgSlug,
 			Slug: &orgSlug,
 			Name: orgSlug,
 		}

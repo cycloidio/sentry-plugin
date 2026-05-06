@@ -107,10 +107,9 @@ func (p *Plugin) Resync(ctx context.Context) {
 
 	if p.config.Sentry.OrganizationSlug != "" {
 		slug := p.config.Sentry.OrganizationSlug
-		emptyID := ""
 		p.logger.Info("using configured organization", "slug", slug)
 		sorgs = append(sorgs, sentryAPI.Organization{
-			ID:   &emptyID,
+			ID:   &slug,
 			Slug: &slug,
 			Name: slug,
 		})
@@ -126,13 +125,14 @@ func (p *Plugin) Resync(ctx context.Context) {
 	}
 	p.logger.Info("organizations fetched", "count", len(sorgs))
 
+	hasErrors := false
 	for _, o := range sorgs {
 		p.logger.Info("syncing organization", "slug", *o.Slug)
 		_, err := p.organizations.Create(ctx, sentry.ToOrganization(o))
 		if err != nil {
 			ferr := fmt.Errorf("failed to create Organization: %w", err)
 			p.logger.Error(ferr.Error())
-			p.setStatus(Error)
+			hasErrors = true
 			continue
 		}
 
@@ -143,7 +143,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 			if perr != nil {
 				ferr := fmt.Errorf("failed to get Sentry Projects: %w", perr)
 				p.logger.Error(ferr.Error())
-				p.setStatus(Error)
+				hasErrors = true
 				continue
 			}
 			for _, prj := range allProjs {
@@ -157,7 +157,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 			if perr != nil {
 				ferr := fmt.Errorf("failed to get Sentry Projects: %w", perr)
 				p.logger.Error(ferr.Error())
-				p.setStatus(Error)
+				hasErrors = true
 				continue
 			}
 		}
@@ -169,7 +169,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 			if err != nil {
 				ferr := fmt.Errorf("failed to create Project: %w", err)
 				p.logger.Error(ferr.Error())
-				p.setStatus(Error)
+				hasErrors = true
 				continue
 			}
 
@@ -183,7 +183,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 			if err != nil {
 				ferr := fmt.Errorf("failed to get Sentry Issues: %w", err)
 				p.logger.Error(ferr.Error())
-				p.setStatus(Error)
+				hasErrors = true
 				continue
 			}
 			p.logger.Info("issues fetched", "organization", *o.Slug, "project", *prj.Slug, "count", len(issues))
@@ -193,15 +193,20 @@ func (p *Plugin) Resync(ctx context.Context) {
 				if err != nil {
 					ferr := fmt.Errorf("failed to create Issue: %w", err)
 					p.logger.Error(ferr.Error())
-					p.setStatus(Error)
+					hasErrors = true
 					continue
 				}
 			}
 		}
 	}
 
-	p.logger.Info("resync completed")
-	p.setStatus(Ok)
+	if hasErrors {
+		p.logger.Info("resync completed with errors")
+		p.setStatus(Error)
+	} else {
+		p.logger.Info("resync completed")
+		p.setStatus(Ok)
+	}
 }
 
 func (p *Plugin) ListAllIssues(ctx context.Context) ([]issue.IssueWithRelations, error) {

@@ -53,4 +53,8 @@ func TestPlugin(t *testing.T) {
 	ctx := context.Background()
 	s.Resync(ctx)
 	assert.Equal(t, service.Ok.String(), s.Ping(ctx).String())
+
+	issues, err := ir.ListAll(ctx)
+	require.NoError(t, err)
+	assert.NotEmpty(t, issues, "expected issues to be synced from Sentry")
 }

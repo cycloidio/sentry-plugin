@@ -3,6 +3,7 @@ ifneq ("$(wildcard .env)","")
 endif
 export SENTRY_API_KEY
 export SENTRY_ENDPOINT
+export SENTRY_ORGANIZATION_SLUG
 
 
 GOCACHE := $(shell go env GOCACHE)
@@ -32,7 +33,7 @@ gen: ## Generates code
 
 .PHONY: test
 test: ## Tests the Plugin
-	@docker-compose -f docker/docker-compose.yml -f docker/develop.yml run -e "SENTRY_API_KEY=$(SENTRY_API_KEY)" -e "SENTRY_ENDPOINT=$(SENTRY_ENDPOINT)" --name sentry_plugin --rm -p 4000:4000 sentry_plugin go test $(ARGS)
+	@docker-compose -f docker/docker-compose.yml -f docker/develop.yml run -e "SENTRY_API_KEY=$(SENTRY_API_KEY)" -e "SENTRY_ENDPOINT=$(SENTRY_ENDPOINT)" -e "SENTRY_ORGANIZATION_SLUG=$(SENTRY_ORGANIZATION_SLUG)" --name sentry_plugin --rm -p 4000:4000 sentry_plugin go test $(ARGS)
 
 .PHONY: docker-release
 docker-release: ## Builds the base Docker image for the registry

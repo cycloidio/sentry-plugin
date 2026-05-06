@@ -21,6 +21,7 @@ type Service interface {
 	Event(ctx context.Context, e event.Event)
 	DeletePlugin(ctx context.Context)
 	Resync(ctx context.Context)
+	ListAllIssues(ctx context.Context) ([]issue.IssueWithRelations, error)
 }
 
 type Plugin struct {
@@ -185,6 +186,10 @@ func (p *Plugin) Resync(ctx context.Context) {
 
 	p.logger.Info("resync completed")
 	p.setStatus(Ok)
+}
+
+func (p *Plugin) ListAllIssues(ctx context.Context) ([]issue.IssueWithRelations, error) {
+	return p.issues.ListAll(ctx)
 }
 
 func (p *Plugin) setStatus(s Status) {

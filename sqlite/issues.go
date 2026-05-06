@@ -47,6 +47,59 @@ func newDBIssue(i issue.Issue) dbIssue {
 	}
 }
 
+func (r *IssueRepository) ListAll(ctx context.Context) ([]issue.IssueWithRelations, error) {
+	rows, err := r.querier.QueryContext(ctx, `
+		SELECT
+			i.id, i.title, i.permalink, i.has_seen, i.first_seen, i.last_seen, i.user_count, i.level, i.status, i.type,
+			p.name, p.slug,
+			o.name, o.slug
+		FROM issues AS i
+		JOIN projects AS p ON p.id = i.project_id
+		JOIN organizations AS o ON o.id = p.organization_id
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query issues: %w", err)
+	}
+	defer rows.Close()
+
+	var results []issue.IssueWithRelations
+	for rows.Next() {
+		var dbi dbIssue
+		var projectName, projectSlug, orgName, orgSlug sql.NullString
+		err := rows.Scan(
+			&dbi.ID, &dbi.Title, &dbi.Permalink, &dbi.HasSeen, &dbi.FirstSeen, &dbi.LastSeen, &dbi.UserCount, &dbi.Level, &dbi.Status, &dbi.Type,
+			&projectName, &projectSlug,
+			&orgName, &orgSlug,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan issue row: %w", err)
+		}
+		results = append(results, issue.IssueWithRelations{
+			Issue: issue.Issue{
+				ID:        dbi.ID.String,
+				Title:     dbi.Title.String,
+				Permalink: dbi.Permalink.String,
+				HasSeen:   dbi.HasSeen.Bool,
+				FirstSeen: dbi.FirstSeen.Time,
+				LastSeen:  dbi.LastSeen.Time,
+				UserCount: int(dbi.UserCount.Int64),
+				Level:     dbi.Level.String,
+				Status:    dbi.Status.String,
+				Type:      dbi.Type.String,
+			},
+			ProjectName:      projectName.String,
+			ProjectSlug:      projectSlug.String,
+			OrganizationName: orgName.String,
+			OrganizationSlug: orgSlug.String,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed iterating issue rows: %w", err)
+	}
+
+	return results, nil
+}
+
 func (r *IssueRepository) Create(ctx context.Context, orgSlug, prjSlug string, i issue.Issue) (uint32, error) {
 	dbi := newDBIssue(i)
 	_, err := r.querier.ExecContext(ctx, `

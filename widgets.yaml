@@ -31,3 +31,11 @@
       - value: status
         title: Status
         type: string
+- type: iframe
+  placement:
+    type: sideMenuPage
+    config:
+      title: Sentry Issues
+      description: HTML table with all Sentry issues and their project/organization details
+  widget:
+    query: "/ui/issues"

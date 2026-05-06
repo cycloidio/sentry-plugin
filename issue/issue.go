@@ -16,3 +16,12 @@ type Issue struct {
 	Status string
 	Type   string
 }
+
+type IssueWithRelations struct {
+	Issue
+
+	ProjectName      string
+	ProjectSlug      string
+	OrganizationName string
+	OrganizationSlug string
+}

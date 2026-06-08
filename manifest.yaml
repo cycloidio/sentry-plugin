@@ -1,5 +1,5 @@
 description: This is a Plugin to import Organizations, Projects and Issues from Sentry
-icon: https://github.com/cycloid-community-catalog/public-stacks/blob/master/stack-dummy/icon.png
+icon: https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/sentry/default.svg
 images:
   - https://www.cycloid.io/wp-content/uploads/2025/07/Before_cycloid-v1-1024x636.webp
   - https://www.cycloid.io/wp-content/uploads/2025/07/With_Cycloid-v1-1024x636.webp
@@ -8,18 +8,18 @@ images:
 configuration:
   - name: "API Key"
     description: "API Key to access the Sentry API"
-    key: sentry_api_key
+    key: SENTRY_API_KEY
     widget: simple_text
     type: string
     required: true
   - name: "Endpoint"
     description: "Endpoint of the Sentry API"
-    key: sentry_endpoint
+    key: SENTRY_ENDPOINT
     widget: simple_text
     type: string
     default: "http://sentry.io/api/0/"
   - name: "Organization slug"
     description: "The organization in which the Sentry instance is scoped,\nif none is provided then all the organizations will be imported"
-    key: sentry_organization_slug
+    key: SENTRY_ORGANIZATION_SLUG
     widget: simple_text
     type: string

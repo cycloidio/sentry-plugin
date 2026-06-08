@@ -15,9 +15,12 @@ type Service interface {
 	GetOrganizations() ([]sentry.Organization, *sentry.Link, error)
 	GetOrganization(orgslug string) (sentry.Organization, error)
 
+	GetProjects() ([]sentry.Project, *sentry.Link, error)
 	GetOrgProjects(o sentry.Organization) ([]sentry.Project, *sentry.Link, error)
 
 	GetIssues(o sentry.Organization, p sentry.Project, statsPeriod *string, shortIDLookup *bool, query *string) ([]sentry.Issue, *sentry.Link, error)
+
+	GetPage(p sentry.Page, out interface{}) (*sentry.Link, error)
 }
 
 func New(apik, ep string) (*sentry.Client, error) {

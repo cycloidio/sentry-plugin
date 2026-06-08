@@ -21,6 +21,7 @@ type Service interface {
 	Event(ctx context.Context, e event.Event)
 	DeletePlugin(ctx context.Context)
 	Resync(ctx context.Context)
+	ListAllIssues(ctx context.Context) ([]issue.IssueWithRelations, error)
 }
 
 type Plugin struct {
@@ -105,15 +106,13 @@ func (p *Plugin) Resync(ctx context.Context) {
 	sorgs := make([]sentryAPI.Organization, 0)
 
 	if p.config.Sentry.OrganizationSlug != "" {
-		p.logger.Info("fetching organization", "slug", p.config.Sentry.OrganizationSlug)
-		o, err := p.sentry.GetOrganization(p.config.Sentry.OrganizationSlug)
-		if err != nil {
-			ferr := fmt.Errorf("failed to get Sentry Organization: %w", err)
-			p.logger.Error(ferr.Error())
-			p.setStatus(Error)
-			return
-		}
-		sorgs = append(sorgs, o)
+		slug := p.config.Sentry.OrganizationSlug
+		p.logger.Info("using configured organization", "slug", slug)
+		sorgs = append(sorgs, sentryAPI.Organization{
+			ID:   &slug,
+			Slug: &slug,
+			Name: slug,
+		})
 	} else {
 		p.logger.Info("fetching all organizations")
 		sorgs, _, err = p.sentry.GetOrganizations()
@@ -126,23 +125,68 @@ func (p *Plugin) Resync(ctx context.Context) {
 	}
 	p.logger.Info("organizations fetched", "count", len(sorgs))
 
+	hasErrors := false
 	for _, o := range sorgs {
 		p.logger.Info("syncing organization", "slug", *o.Slug)
 		_, err := p.organizations.Create(ctx, sentry.ToOrganization(o))
 		if err != nil {
 			ferr := fmt.Errorf("failed to create Organization: %w", err)
 			p.logger.Error(ferr.Error())
-			p.setStatus(Error)
+			hasErrors = true
 			continue
 		}
 
 		p.logger.Info("fetching projects", "organization", *o.Slug)
-		sprojs, _, err := p.sentry.GetOrgProjects(o)
-		if err != nil {
-			ferr := fmt.Errorf("failed to get Sentry Projects: %w", err)
-			p.logger.Error(ferr.Error())
-			p.setStatus(Error)
-			continue
+		var sprojs []sentryAPI.Project
+		if p.config.Sentry.OrganizationSlug != "" {
+			pageProjs, link, perr := p.sentry.GetProjects()
+			if perr != nil {
+				ferr := fmt.Errorf("failed to get Sentry Projects: %w", perr)
+				p.logger.Error(ferr.Error())
+				hasErrors = true
+				continue
+			}
+			for _, prj := range pageProjs {
+				if prj.Organization != nil && prj.Organization.Slug != nil && *prj.Organization.Slug == *o.Slug {
+					sprojs = append(sprojs, prj)
+				}
+			}
+			for link != nil && link.Next.Results {
+				pageProjs = nil
+				link, perr = p.sentry.GetPage(link.Next, &pageProjs)
+				if perr != nil {
+					ferr := fmt.Errorf("failed to get Sentry Projects page: %w", perr)
+					p.logger.Error(ferr.Error())
+					hasErrors = true
+					break
+				}
+				for _, prj := range pageProjs {
+					if prj.Organization != nil && prj.Organization.Slug != nil && *prj.Organization.Slug == *o.Slug {
+						sprojs = append(sprojs, prj)
+					}
+				}
+			}
+		} else {
+			var perr error
+			var link *sentryAPI.Link
+			sprojs, link, perr = p.sentry.GetOrgProjects(o)
+			if perr != nil {
+				ferr := fmt.Errorf("failed to get Sentry Projects: %w", perr)
+				p.logger.Error(ferr.Error())
+				hasErrors = true
+				continue
+			}
+			for link != nil && link.Next.Results {
+				var pageProjs []sentryAPI.Project
+				link, perr = p.sentry.GetPage(link.Next, &pageProjs)
+				if perr != nil {
+					ferr := fmt.Errorf("failed to get Sentry Projects page: %w", perr)
+					p.logger.Error(ferr.Error())
+					hasErrors = true
+					break
+				}
+				sprojs = append(sprojs, pageProjs...)
+			}
 		}
 		p.logger.Info("projects fetched", "organization", *o.Slug, "count", len(sprojs))
 
@@ -152,7 +196,7 @@ func (p *Plugin) Resync(ctx context.Context) {
 			if err != nil {
 				ferr := fmt.Errorf("failed to create Project: %w", err)
 				p.logger.Error(ferr.Error())
-				p.setStatus(Error)
+				hasErrors = true
 				continue
 			}
 
@@ -162,12 +206,23 @@ func (p *Plugin) Resync(ctx context.Context) {
 				query         *string = nil
 			)
 			p.logger.Info("fetching issues", "organization", *o.Slug, "project", *prj.Slug)
-			issues, _, err := p.sentry.GetIssues(o, prj, statsPeriod, shortIDLookup, query)
+			issues, link, err := p.sentry.GetIssues(o, prj, statsPeriod, shortIDLookup, query)
 			if err != nil {
 				ferr := fmt.Errorf("failed to get Sentry Issues: %w", err)
 				p.logger.Error(ferr.Error())
-				p.setStatus(Error)
+				hasErrors = true
 				continue
+			}
+			for link != nil && link.Next.Results {
+				var pageIssues []sentryAPI.Issue
+				link, err = p.sentry.GetPage(link.Next, &pageIssues)
+				if err != nil {
+					ferr := fmt.Errorf("failed to get Sentry Issues page: %w", err)
+					p.logger.Error(ferr.Error())
+					hasErrors = true
+					break
+				}
+				issues = append(issues, pageIssues...)
 			}
 			p.logger.Info("issues fetched", "organization", *o.Slug, "project", *prj.Slug, "count", len(issues))
 
@@ -176,15 +231,24 @@ func (p *Plugin) Resync(ctx context.Context) {
 				if err != nil {
 					ferr := fmt.Errorf("failed to create Issue: %w", err)
 					p.logger.Error(ferr.Error())
-					p.setStatus(Error)
+					hasErrors = true
 					continue
 				}
 			}
 		}
 	}
 
-	p.logger.Info("resync completed")
-	p.setStatus(Ok)
+	if hasErrors {
+		p.logger.Info("resync completed with errors")
+		p.setStatus(Error)
+	} else {
+		p.logger.Info("resync completed")
+		p.setStatus(Ok)
+	}
+}
+
+func (p *Plugin) ListAllIssues(ctx context.Context) ([]issue.IssueWithRelations, error) {
+	return p.issues.ListAll(ctx)
 }
 
 func (p *Plugin) setStatus(s Status) {

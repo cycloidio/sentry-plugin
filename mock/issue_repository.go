@@ -56,60 +56,17 @@ func (mr *IssueRepositoryMockRecorder) Create(ctx, orgSlug, prjSlug, i any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*IssueRepository)(nil).Create), ctx, orgSlug, prjSlug, i)
 }
 
-// Delete mocks base method.
-func (m *IssueRepository) Delete(ctx context.Context, orgSlug, prjSlug, isuID string) error {
+// ListAll mocks base method.
+func (m *IssueRepository) ListAll(ctx context.Context) ([]issue.IssueWithRelations, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, orgSlug, prjSlug, isuID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *IssueRepositoryMockRecorder) Delete(ctx, orgSlug, prjSlug, isuID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*IssueRepository)(nil).Delete), ctx, orgSlug, prjSlug, isuID)
-}
-
-// Filter mocks base method.
-func (m *IssueRepository) Filter(ctx context.Context, orgSlug, prjSlug string) ([]*issue.Issue, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Filter", ctx, orgSlug, prjSlug)
-	ret0, _ := ret[0].([]*issue.Issue)
+	ret := m.ctrl.Call(m, "ListAll", ctx)
+	ret0, _ := ret[0].([]issue.IssueWithRelations)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Filter indicates an expected call of Filter.
-func (mr *IssueRepositoryMockRecorder) Filter(ctx, orgSlug, prjSlug any) *gomock.Call {
+// ListAll indicates an expected call of ListAll.
+func (mr *IssueRepositoryMockRecorder) ListAll(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Filter", reflect.TypeOf((*IssueRepository)(nil).Filter), ctx, orgSlug, prjSlug)
-}
-
-// Find mocks base method.
-func (m *IssueRepository) Find(ctx context.Context, orgSlug, prjSlug, isuID string) (*issue.Issue, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Find", ctx, orgSlug, prjSlug, isuID)
-	ret0, _ := ret[0].(*issue.Issue)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Find indicates an expected call of Find.
-func (mr *IssueRepositoryMockRecorder) Find(ctx, orgSlug, prjSlug, isuID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*IssueRepository)(nil).Find), ctx, orgSlug, prjSlug, isuID)
-}
-
-// Update mocks base method.
-func (m *IssueRepository) Update(ctx context.Context, orgSlug, prjSlug, isuID string, i issue.Issue) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, orgSlug, prjSlug, isuID, i)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Update indicates an expected call of Update.
-func (mr *IssueRepositoryMockRecorder) Update(ctx, orgSlug, prjSlug, isuID, i any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*IssueRepository)(nil).Update), ctx, orgSlug, prjSlug, isuID, i)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAll", reflect.TypeOf((*IssueRepository)(nil).ListAll), ctx)
 }
